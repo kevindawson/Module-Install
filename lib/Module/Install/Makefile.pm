@@ -198,6 +198,18 @@ sub tests_recursive {
 	$self->tests( join ' ', sort keys %tests );
 }
 
+sub _flatten_prereqs {
+	my ($self, $args, $args_key, @requires) = @_;
+
+	my $prereq = ($args->{$args_key} ||= {});
+	%$prereq = (
+		%$prereq, map {@$_}    # flatten [module => version]
+			map {@$_} grep $_, @requires
+	);
+
+	$prereq;
+}
+
 sub write {
 	my $self = shift;
 	die "&Makefile->write() takes no arguments\n" if @_;
@@ -287,17 +299,31 @@ EOT
 	# Remove any reference to perl, PREREQ_PM doesn't support it
 	delete $args->{PREREQ_PM}->{perl};
 
-	# Merge both kinds of requires into BUILD_REQUIRES
-	my $build_prereq = ($args->{BUILD_REQUIRES} ||= {});
-	%$build_prereq = ( %$build_prereq,
-		map { @$_ } # flatten [module => version]
-		map { @$_ }
-		grep $_,
-		($self->configure_requires, $self->build_requires)
-	);
+	my ($build_prereq, $test_prereq);
+	if ($self->makemaker(6.63_03)) {
+		$build_prereq
+			= $self->_flatten_prereqs($args, 'BUILD_REQUIRES',
+			($self->configure_requires, $self->build_requires),
+			);
+		$test_prereq
+			= $self->_flatten_prereqs($args, 'TEST_REQUIRES', $self->test_requires,
+			);
+	}
+	else {
+		# Merge both kinds of requires into BUILD_REQUIRES
+		$build_prereq = $self->_flatten_prereqs(
+			$args,
+			'BUILD_REQUIRES',
+			(
+				$self->configure_requires, $self->build_requires,
+				$self->test_requires
+			),
+		);
+	}
 
 	# Remove any reference to perl, BUILD_REQUIRES doesn't support it
 	delete $args->{BUILD_REQUIRES}->{perl};
+	delete $args->{TEST_REQUIRES}->{perl} if exists $args->{TEST_REQUIRES};
 
 	# Delete bundled dists from prereq_pm, add it to Makefile DIR
 	my $subdirs = ($args->{DIR} || []);
@@ -319,7 +345,7 @@ EOT
 	}
 
 	unless ( $self->makemaker('6.55_03') ) {
-		%$prereq = (%$prereq,%$build_prereq);
+		%$prereq = (%$prereq,%$build_prereq,%$test_prereq);
 		delete $args->{BUILD_REQUIRES};
 	}
 

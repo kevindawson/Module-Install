@@ -27,6 +27,7 @@ my @scalar_keys = qw{
 my @tuple_keys = qw{
 	configure_requires
 	build_requires
+	test_requires
 	requires
 	recommends
 	bundles

@@ -189,11 +189,9 @@ package managers than for the CPAN, from where you usually want to
 install everything for future reuse (unless you are too lazy to test
 distributions).
 
-As of this writing, C<test_requires> is just an alias for
-C<build_requires>, but this may change in the future.
-
-The values set by B<build_requires> and B<test_requires> are passed
-to L<ExtUtils::MakeMaker> as a C<BUILD_REQUIRES> attribute, which may
+The values set by B<build_requires> and B<test_requires> are passed to
+L<ExtUtils::MakeMaker> as a C<BUILD_REQUIRES> and C<TEST_REQUIRES> (if
+it is newer than version 6.63_03) attribute respectively, which may
 fall back to C<PREREQ_PM> if your L<ExtUtils::MakeMaker> is not new
 enough.
 

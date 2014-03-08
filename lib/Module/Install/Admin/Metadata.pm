@@ -57,6 +57,10 @@ sub dump_meta {
 	my $ver  = $self->_top->VERSION;
 	my $val  = $self->Meta->{values};
 
+	# At this point test_requires have been sent to MakeMaker
+	# Merge it to build_requires
+	$val->{build_requires} = [ @{$val->{build_requires}}, @{(delete $val->{test_requires}) || []} ];
+
 	delete $val->{sign};
 
 	# Dependencies MUST be assumed to be dynamic unless indicated
