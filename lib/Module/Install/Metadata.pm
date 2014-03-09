@@ -141,7 +141,10 @@ sub resources {
 
 # Aliases for build_requires that will have alternative
 # meanings in some future version of META.yml.
-sub test_requires     { shift->build_requires(@_) }
+require ExtUtils::MakeMaker;
+if ( ( eval {$ExtUtils::MakeMaker::VERSION} )+0 >= ( eval {6.63_03} )+0 ) {
+	sub test_requires     { shift->build_requires(@_) };
+}
 sub install_requires  { shift->build_requires(@_) }
 
 # Aliases for installdirs options

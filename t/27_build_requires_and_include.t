@@ -31,8 +31,16 @@ END_DSL
 	ok(-f $meta_yml, 'has META.yml');
 
 	my $meta = YAML::Tiny::LoadFile($meta_yml);
-	ok $meta->{build_requires}{'Test::More'}, 'Test::More is listed in build_requires';
+#	ok $meta->{build_requires}{'Test::More'}, 'Test::More is listed in build_requires';
+	if ((eval {$ExtUtils::MakeMaker::VERSION}) + 0 >= (eval {6.63_03}) + 0) {
 
+		ok !$meta->{build_requires}{'Test::More'},
+			'Test::More is not listed in build_requires';
+	}
+	else {
+		ok $meta->{build_requires}{'Test::More'},
+			'Test::More is not listed in build_requires';
+	}
 	my $makefile = makefile();
 	ok(-f $makefile, 'has Makefile');
 
@@ -41,6 +49,7 @@ END_DSL
 
 	ok( kill_dist(), 'kill_dist' );
 }
+
 
 SCOPE: {  # include removes Test::More from the build_requires in META.yml
 	ok( create_dist('Foo', { 'Makefile.PL' => <<"END_DSL" }), 'create_dist' );
@@ -61,12 +70,34 @@ END_DSL
 	ok(-f $meta_yml, 'has META.yml');
 
 	my $meta = YAML::Tiny::LoadFile($meta_yml);
-	ok !$meta->{build_requires}{'Test::More'}, 'Test::More is not listed in build_requires';
+	if ((eval {$ExtUtils::MakeMaker::VERSION}) + 0 >= (eval {6.63_03}) + 0) {
 
+		ok !$meta->{build_requires}{'Test::More'},
+			'Test::More is not listed in build_requires';
+	}
+	else {
+		ok !$meta->{build_requires}{'Test::More'},
+			'Test::More is not listed in build_requires';
+	}
 	my $makefile = makefile();
 	ok(-f $makefile, 'has Makefile');
 
 	my $content = _read($makefile);
-	ok($content !~ /^#\s+(PREREQ_PM|BUILD_REQUIRES)\s*=>\s*{[^}]+Test::More=>q\[9999\]/m, 'Test::More is not listed in PREREQ_PM|BUILD_REQUIRES in Makefile');
+	require ExtUtils::MakeMaker;
+
+	if ( ( eval {$ExtUtils::MakeMaker::VERSION} )+0 >= ( eval {6.63_03} )+0 ) {
+		ok(
+			$content !~ /^#\s+(BUILD_REQUIRES)\s*=>\s*{[^}]+Test::More=>q\[9999\]/m,
+			'Test::More is not listed in BUILD_REQUIRES in Makefile'
+		);
+	}
+	else {
+		ok(
+			$content
+				!~ /^#\s+(PREREQ_PM|BUILD_REQUIRES)\s*=>\s*{[^}]+Test::More=>q\[9999\]/m,
+			'Test::More is not listed in PREREQ_PM|BUILD_REQUIRES in Makefile'
+		);
+	}
+
 	ok( kill_dist(), 'kill_dist' );
 }

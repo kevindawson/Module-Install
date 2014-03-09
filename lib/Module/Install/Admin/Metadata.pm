@@ -3,7 +3,6 @@ package Module::Install::Admin::Metadata;
 use strict;
 use YAML::Tiny ();
 use Module::Install::Base;
-
 use vars qw{$VERSION @ISA};
 BEGIN {
 	$VERSION = '1.08';
@@ -59,7 +58,7 @@ sub dump_meta {
 
 	# At this point test_requires have been sent to MakeMaker
 	# Merge it to build_requires
-	$val->{build_requires} = [ @{$val->{build_requires}}, @{(delete $val->{test_requires}) || []} ];
+	$val->{build_requires} = [ @{$val->{build_requires}}, @{(delete $val->{test_requires}) || []} ] if !$self->makemaker(6.63_03);
 
 	delete $val->{sign};
 
